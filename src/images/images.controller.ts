@@ -18,6 +18,11 @@ export class ImagesController {
   ) {
     const key: string = request.path.replace(/^\//, '');
 
+    if (!key) {
+      response.status(404).send('Não encontrado');
+      return;
+    }
+
     const imageBuffer = await this.imagesService.processImageFromS3(
       key,
       format || 'jpeg',

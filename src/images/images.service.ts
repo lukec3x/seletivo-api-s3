@@ -3,13 +3,17 @@ import { Injectable } from '@nestjs/common';
 import { Readable } from 'stream';
 import * as sharp from 'sharp';
 import { ConfigService } from '@nestjs/config';
+import { ImagesRepository } from './repositories/images.repository';
 
 @Injectable()
 export class ImagesService {
   private s3Client: S3Client;
   private bucketName: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly imagesRepository: ImagesRepository,
+  ) {
     this.s3Client = new S3Client({
       region: this.configService.get<string>('AWS_REGION'),
       credentials: {
@@ -39,6 +43,13 @@ export class ImagesService {
     quality: number,
     grayscale: boolean,
   ): Promise<Buffer> {
+    const uniqueId = `${key}-${format}-${width}-${height}-${quality}-${grayscale}`;
+
+    const imageCache = await this.imagesRepository.findOne(uniqueId);
+    if (imageCache) {
+      return Buffer.from(imageCache.data, 'base64');
+    }
+
     const command = new GetObjectCommand({
       Bucket: this.bucketName,
       Key: key,
@@ -67,6 +78,13 @@ export class ImagesService {
       image = image.toFormat(format as keyof sharp.FormatEnum, { quality });
     }
 
-    return await image.toBuffer();
+    const newImageBuffer = await image.toBuffer();
+
+    await this.imagesRepository.create({
+      uniqueId,
+      data: newImageBuffer.toString('base64'),
+    });
+
+    return newImageBuffer;
   }
 }
