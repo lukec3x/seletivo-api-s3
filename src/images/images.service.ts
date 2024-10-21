@@ -1,29 +1,19 @@
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
 import { Readable } from 'stream';
 import * as sharp from 'sharp';
 import { ConfigService } from '@nestjs/config';
 import { ImagesRepository } from './repositories/images.repository';
+import axios from 'axios';
 
 @Injectable()
 export class ImagesService {
-  private s3Client: S3Client;
-  private bucketName: string;
+  private bucketBaseUrl: string;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly imagesRepository: ImagesRepository,
   ) {
-    this.s3Client = new S3Client({
-      region: this.configService.get<string>('AWS_REGION'),
-      credentials: {
-        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.get<string>(
-          'AWS_SECRET_ACCESS_KEY',
-        ),
-      },
-    });
-    this.bucketName = this.configService.get<string>('AWS_BUCKET_NAME');
+    this.bucketBaseUrl = this.configService.get<string>('AWS_BUCKET_BASE_URL');
   }
 
   async streamToBuffer(stream: Readable): Promise<Buffer> {
@@ -50,18 +40,16 @@ export class ImagesService {
       return Buffer.from(imageCache.data, 'base64');
     }
 
-    const command = new GetObjectCommand({
-      Bucket: this.bucketName,
-      Key: key,
+    const url = `${this.bucketBaseUrl}/${key}`;
+    const response = await axios.get(url, {
+      responseType: 'arraybuffer',
     });
 
-    const response = await this.s3Client.send(command);
-
-    if (!response.Body) {
+    if (response.status !== 200) {
       throw new Error('Erro ao buscar a imagem do S3');
     }
 
-    const imageBuffer = await this.streamToBuffer(response.Body as Readable);
+    const imageBuffer = Buffer.from(response.data);
 
     let image = sharp(imageBuffer);
 

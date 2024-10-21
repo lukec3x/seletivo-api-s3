@@ -6,7 +6,7 @@ API que fornece imagens que estão salvas no AWS S3.
 
 ```bash
 # Criar o .env
-$ echo "AWS_ACCESS_KEY_ID=AKIAT7JJU57BAR44XQBU\nAWS_SECRET_ACCESS_KEY=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\nAWS_REGION=us-east-1\nAWS_BUCKET_NAME=seletivo-weedoit" > .env
+$ echo "AWS_ACCESS_KEY_ID=https://seletivo-weedoit.s3.amazonaws.com" > .env
 
 # Rodar a api e subir o banco de dados
 $ docker-compose up
