@@ -9,8 +9,9 @@ RUN yarn
 
 COPY . .
 
+COPY entrypoint.sh ./
+RUN chmod +x /app/entrypoint.sh
+
 RUN yarn build
 
-EXPOSE 3000
-
-CMD ["yarn", "start:prod"]
+ENTRYPOINT ["/app/entrypoint.sh"]
