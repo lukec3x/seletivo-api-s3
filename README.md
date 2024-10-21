@@ -16,7 +16,7 @@ $ docker-compose up
 
 Abra o arquivo `index.html` no navegador.
 
-## _[WIP]_ Como melhorar a performance
+## Como melhorar a performance
 
 ### Usar CDN
 
